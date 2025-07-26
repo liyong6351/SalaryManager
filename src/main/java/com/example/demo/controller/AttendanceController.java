@@ -57,7 +57,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/uploadData")
-    public void uploadDataExcel(@RequestParam("file") MultipartFile file, Model model) throws IOException {
+    public String uploadDataExcel(@RequestParam("file") MultipartFile file, Model model) throws IOException {
 
         List<Map<String, String>> lists = EasyExcel.read(file.getInputStream())
                 .sheet(0)
@@ -65,5 +65,7 @@ public class AttendanceController {
                 .headRowNumber(0)
                 .doReadSync();
         service.uploadData(lists);
+        model.addAttribute("UploadDataMessage","数据表导入成功");
+        return "upload";
     }
 }

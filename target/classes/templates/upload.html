@@ -176,7 +176,7 @@
     </div>
 
     <div th:if="${UploadDataMessage}" th:class="${UploadDataMessageType == 'error' ? 'message error' : 'message info'}">
-        <span th:text="${message}"></span>
+        <span th:text="${UploadDataMessage}"></span>
     </div>
 
     <div class="card" onclick="document.getElementById('fileInputData').click()">
