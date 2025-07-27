@@ -44,15 +44,16 @@ public class AttendanceController {
         }
 
         List<Map<String, String>> lists = EasyExcel.read(file.getInputStream())
+                .ignoreEmptyRow(false)
                 .sheet(0)
                 .registerReadListener(new ReadSheetDataListener())
                 .headRowNumber(0)
                 .doReadSync();
-        service.uploadPlan(lists);
+        String s = service.uploadPlan(lists);
 
         //0 -> 排班信息：班次A（早班）: 07:30-17:00  班次B：14:00-22:00（中班）  休: 当天休息
 
-        model.addAttribute("message", "排班表导入成功");
+        model.addAttribute("message", "排班表导入成功:" + s);
         return "upload";
     }
 
@@ -60,12 +61,14 @@ public class AttendanceController {
     public String uploadDataExcel(@RequestParam("file") MultipartFile file, Model model) throws IOException {
 
         List<Map<String, String>> lists = EasyExcel.read(file.getInputStream())
+                .ignoreEmptyRow(false)
                 .sheet(0)
                 .registerReadListener(new ReadSheetDataListener())
                 .headRowNumber(0)
                 .doReadSync();
         service.uploadData(lists);
-        model.addAttribute("UploadDataMessage","数据表导入成功");
+
+        model.addAttribute("UploadDataMessage", "数据表导入成功");
         return "upload";
     }
 }

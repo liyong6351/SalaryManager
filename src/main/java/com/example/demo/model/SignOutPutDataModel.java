@@ -22,8 +22,6 @@ public class SignOutPutDataModel {
     private String arrivedLate;
     //早退
     private String leaveEarly;
-    //上班缺卡
-    private String workCardShortage;
     //下班缺卡
-    private String workAfterCardShortage;
+    private String lackCard;
 }

@@ -14,6 +14,7 @@ import java.util.Date;
 @ToString
 public class PlanDataModel {
     private String name;
+    private String type;
     private Date date;
     private Date startTime;
     private Date endTime;

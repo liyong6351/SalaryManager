@@ -27,12 +27,8 @@ public class SignOutPutStatisticsDataModel {
     private int earlyDays;
     // 早退详情
     private String earlyDetail;
-    // 上班缺卡天数
-    private int workNoCardDys;
-    // 上班缺卡详情
-    private int workNoCardDetail;
-    // 下班缺卡天数
-    private int afterWorkNoCardDys;
-    // 下班缺卡详情
-    private int afterWorkNoCardDetail;
+    // 缺卡天数
+    private int afterWorkNoCardDays;
+    // 缺卡详情
+    private String afterWorkNoCardDetail;
 }
