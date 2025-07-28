@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class AttendanceController {
     }
 
     @PostMapping("/uploadData")
-    public String uploadDataExcel(@RequestParam("file") MultipartFile file, Model model) throws IOException {
+    public String uploadDataExcel(@RequestParam("file") MultipartFile file, Model model, HttpServletResponse response) throws IOException {
 
         List<Map<String, String>> lists = EasyExcel.read(file.getInputStream())
                 .ignoreEmptyRow(false)
@@ -66,7 +67,7 @@ public class AttendanceController {
                 .registerReadListener(new ReadSheetDataListener())
                 .headRowNumber(0)
                 .doReadSync();
-        service.uploadData(lists);
+        service.uploadData(lists, response);
 
         model.addAttribute("UploadDataMessage", "数据表导入成功");
         return "upload";

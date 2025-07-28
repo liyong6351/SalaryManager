@@ -109,12 +109,12 @@ public class PlanDataTransfer extends AbstractExcelDataTransfer<PlanDataModel> {
 
         String firstKey = etl4Key(split[1]);
         String[] s1 = split[2].split("-");
-        Date firstKeyStartDate = DateCustomUtils.trans4Plan(s1[0]);
-        Date firstKeyEndDate = DateCustomUtils.trans4Plan(s1[1]);
+        Date firstKeyStartDate = DateCustomUtils.trans4Plan(month, s1[0]);
+        Date firstKeyEndDate = DateCustomUtils.trans4Plan(month, s1[1]);
         String secondKey = etl4Key(split[3]);
         String[] s2 = split[4].split("-");
-        Date secondKeyStartDate = DateCustomUtils.trans4Plan(s2[0]);
-        Date secondKeyEndDate = DateCustomUtils.trans4Plan(s2[1]);
+        Date secondKeyStartDate = DateCustomUtils.trans4Plan(month, s2[0]);
+        Date secondKeyEndDate = DateCustomUtils.trans4Plan(month, s2[1]);
         String thirdKey = etl4Key(split[5]);
 
         StartTimeEndTimeModel firstKeyData = new StartTimeEndTimeModel(firstKeyStartDate, firstKeyEndDate);
@@ -138,7 +138,7 @@ public class PlanDataTransfer extends AbstractExcelDataTransfer<PlanDataModel> {
             calendar.add(Calendar.DATE, -1);
             int realMonth = calendar.get(Calendar.MONTH);
             do {
-                tempData.put(DateCustomUtils.getDay(calendar.getTime()), data);
+                tempData.put(DateCustomUtils.transFormat4Day(calendar.getTime()), data);
                 calendar.add(Calendar.DATE, -1);
             } while (realMonth == calendar.get(Calendar.MONTH));
         }

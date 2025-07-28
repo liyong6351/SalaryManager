@@ -28,7 +28,7 @@ public class RedisUtils {
                 }
                 if (model.getStartTime() != null && model.getEndTime() != null) {
                     if (date[0] == null) {
-                        date[0] = model.getStartTime();
+                        date[0] = model.getDate();
                     }
                     shouldWorkMap.put(model.getName(), shouldWorkMap.get(model.getName()) + 1);
                 }
@@ -55,11 +55,23 @@ public class RedisUtils {
         String mainKey = "shouldWork-" + DateCustomUtils.getMonth(date);
         Map<Object, Object> entries = template.opsForHash().entries(mainKey);
         if (MapUtils.isNotEmpty(entries)) {
-            entries.forEach((k, v) -> result.put(k.toString(), (Integer) v));
+            entries.forEach((k, v) -> result.put(k.toString(), Integer.parseInt(v.toString())));
         }
 
         return result;
     }
+
+    public static Map<String, PlanDataModel> getPlan4User(StringRedisTemplate template, String name) {
+        Map<String, PlanDataModel> result = new HashMap<>();
+        String mainKey = "user-" + name;
+        Map<Object, Object> entries = template.opsForHash().entries(mainKey);
+        if (MapUtils.isNotEmpty(entries)) {
+            entries.forEach((k, v) -> result.put(k.toString(), JSON.parseObject(v.toString(), PlanDataModel.class)));
+        }
+
+        return result;
+    }
+
 
     public static PlanDataModel getPlanData4User(StringRedisTemplate template, String name, Date date) {
         PlanDataModel result = null;
