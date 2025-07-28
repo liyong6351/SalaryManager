@@ -21,14 +21,14 @@ public class SignOutPutStatisticsDataModel {
     private int absenceDays;
     // 迟到天数
     private int lateDays;
-    // 迟到详情
-    private String lateDetail;
     // 早退天数
     private int earlyDays;
+    // 缺卡天数
+    private int lackCardDays;
+    // 迟到详情
+    private String lateDetail;
     // 早退详情
     private String earlyDetail;
-    // 缺卡天数
-    private int afterWorkNoCardDays;
     // 缺卡详情
-    private String afterWorkNoCardDetail;
+    private String lackCardDetail;
 }

@@ -45,6 +45,22 @@ public class RedisUtils {
         return result.size();
     }
 
+    /**
+     * @Description: 从Redis获取
+     * @Author: liyong
+     * @Date: 2025/7/28 18:44
+     */
+    public static Map<String, Integer> getShouldWorkMap(StringRedisTemplate template, Date date) {
+        Map<String, Integer> result = new HashMap<>();
+        String mainKey = "shouldWork-" + DateCustomUtils.getMonth(date);
+        Map<Object, Object> entries = template.opsForHash().entries(mainKey);
+        if (MapUtils.isNotEmpty(entries)) {
+            entries.forEach((k, v) -> result.put(k.toString(), (Integer) v));
+        }
+
+        return result;
+    }
+
     public static PlanDataModel getPlanData4User(StringRedisTemplate template, String name, Date date) {
         PlanDataModel result = null;
         Object o = template.opsForHash().get("user-" + name, DateCustomUtils.transFormat4Day(date));
@@ -53,6 +69,7 @@ public class RedisUtils {
         }
         return result;
     }
+
 
     public static StartTimeEndTimeModel getPlan(StringRedisTemplate template, String day, String planType) {
         return (StartTimeEndTimeModel) template.opsForHash().get(day, planType);

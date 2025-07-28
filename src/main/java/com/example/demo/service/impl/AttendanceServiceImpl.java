@@ -10,11 +10,14 @@ import com.example.demo.tool.transfer.AbstractExcelDataTransfer;
 import com.example.demo.utils.DateCustomUtils;
 import com.example.demo.utils.RedisUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.example.demo.utils.RedisUtils.getShouldWorkMap;
 
 @Service
 public class AttendanceServiceImpl implements AttendanceService {
@@ -77,6 +80,7 @@ public class AttendanceServiceImpl implements AttendanceService {
         if (CollectionUtils.isEmpty(list)) {
             return result;
         }
+        Date date = list.get(0).getDate();
         Map<String, List<SignDataModel>> name2RecordListMap = new HashMap<>();
         for (SignDataModel model : list) {
             if (!name2RecordListMap.containsKey(model.getName())) {
@@ -85,6 +89,27 @@ public class AttendanceServiceImpl implements AttendanceService {
             name2RecordListMap.get(model.getName()).add(model);
         }
 
+        if (MapUtils.isNotEmpty(name2RecordListMap)) {
+            //名字->工作时间
+            Map<String, Integer> shouldWorkMap = getShouldWorkMap(stringRedisTemplate, date);
+            for (Map.Entry<String, List<SignDataModel>> entry : name2RecordListMap.entrySet()) {
+                SignOutPutStatisticsDataModel model = new SignOutPutStatisticsDataModel();
+                model.setName(entry.getKey());
+                model.setShouldPresentDays(shouldWorkMap.getOrDefault(entry.getKey(), 0));
+                analyseList(model, entry.getValue());
+                result.add(model);
+            }
+        }
+
         return result;
+    }
+
+    private void analyseList(SignOutPutStatisticsDataModel model, List<SignDataModel> list) {
+        StringBuilder lateDetail = new StringBuilder();
+        StringBuilder earlyDetail = new StringBuilder();
+        StringBuilder lackDetail = new StringBuilder();
+        for (SignDataModel signDataModel : list) {
+
+        }
     }
 }
