@@ -8,4 +8,6 @@ public interface AttendanceService {
     String uploadPlan(List<Map<String, String>> list);
 
     void uploadData(List<Map<String, String>> list, HttpServletResponse response);
+
+    void cleanData();
 }

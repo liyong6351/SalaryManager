@@ -15,15 +15,11 @@ import java.util.Date;
 public class SignDataModel {
     private String name;
     private Date date;
+    private String type;
     private Date startTime;
     private Date endTime;
+    private Date shouldStartTime;
+    private Date shouldEndTime;
     private String originalData;
-    // 迟到
-    private boolean arrivedLate;
-    //早退
-    private boolean leaveEarly;
-    //下班缺卡
-    private boolean lackCard;
-    // 是否缺勤
-    private boolean lackArrived;
+    private int cardTimes;
 }

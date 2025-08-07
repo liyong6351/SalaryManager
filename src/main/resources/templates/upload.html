@@ -159,6 +159,10 @@
     <h1>Excel 数据导入工具</h1>
     <p class="subtitle">上传Excel文件，系统将自动解析并显示数据</p>
 
+    <form method="POST" action="/cleanData">
+        <button type="submit">清除所有数据</button>
+    </form>
+
     <div th:if="${message}" th:class="${messageType == 'error' ? 'message error' : 'message info'}">
         <span th:text="${message}"></span>
     </div>

@@ -2,9 +2,7 @@ package com.example.demo.controller;
 
 import com.alibaba.excel.EasyExcel;
 import com.example.demo.service.AttendanceService;
-import com.example.demo.service.impl.AttendanceServiceImpl;
 import com.example.demo.tool.ReadSheetDataListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -70,6 +68,13 @@ public class AttendanceController {
         service.uploadData(lists, response);
 
         model.addAttribute("UploadDataMessage", "数据表导入成功");
+        return "upload";
+    }
+
+    @PostMapping("/cleanData")
+    public String cleanData(Model model) {
+        service.cleanData();
+        model.addAttribute("UploadDataMessage", "清除数据成功");
         return "upload";
     }
 }

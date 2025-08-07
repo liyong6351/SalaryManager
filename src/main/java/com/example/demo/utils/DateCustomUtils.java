@@ -1,7 +1,6 @@
 package com.example.demo.utils;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DateFormatUtils;
 
 import java.text.*;
 import java.time.LocalDate;
@@ -27,13 +26,27 @@ public class DateCustomUtils {
      * @return yyyy-mm-dd hh:mm:ss 格式
      */
     public static Date trans4Plan(int month, String arg) {
-        String[] split = arg.split("-");
-        String[] split1 = split[0].split(":");
+        String[] split = arg.split("-", 0);
+        String[] split1 = split[0].split(":", 0);
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.MONTH, month - 1);
         calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(split1[0]));
         calendar.set(Calendar.MINUTE, Integer.parseInt(split1[1]));
+        calendar.set(Calendar.SECOND, 0);
         return calendar.getTime();
+    }
+
+    public static boolean isDateSame(Date date1, Date date2) {
+        boolean result = false;
+        if (date1 == null && date2 == null) {
+            result = true;
+        } else if (date1 != null && date2 != null) {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(FORMAT_SECOND);
+            String format = simpleDateFormat.format(date1);
+            String format1 = simpleDateFormat.format(date2);
+            result = format.equals(format1);
+        }
+        return result;
     }
 
     public static String getMonth(Date date) {
@@ -64,11 +77,68 @@ public class DateCustomUtils {
      * @throws ParseException 转换失败
      */
     public static Date transFormat4Day(String str) {
-        // 步骤 1：解析为 LocalDate
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate localDate = LocalDate.parse(str, formatter);
-        // 步骤 2：转换为 Date（如需旧版 Date 对象）
-        return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        str = str.replaceAll("\t", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
+        Date parse = transFormat4DayYYYYMMDD(str);
+        if (parse == null) {
+            parse = transFormat4DayYYYY_MM_DD(str);
+        }
+        if (parse == null) {
+            parse = transFormat4DayMMDD(str);
+        }
+        if (parse == null) {
+            parse = transFormat4DayMMDD1(str);
+        }
+        return parse;
+    }
+
+    private static Date transFormat4DayYYYYMMDD(String str) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        Date parse;
+        try {
+            parse = simpleDateFormat.parse(str);
+        } catch (ParseException e) {
+            return null;
+        }
+        return parse;
+    }
+
+    private static Date transFormat4DayYYYY_MM_DD(String str) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date parse;
+        try {
+            parse = simpleDateFormat.parse(str);
+        } catch (ParseException e) {
+            return null;
+        }
+        return parse;
+    }
+
+    private static Date transFormat4DayMMDD(String str) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        Date parse = new Date();
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        str = year + "/" + str;
+        try {
+            parse = simpleDateFormat.parse(str);
+        } catch (ParseException ex) {
+            return null;
+        }
+        return parse;
+    }
+
+    private static Date transFormat4DayMMDD1(String str) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date parse;
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        str = year + "-" + str;
+        try {
+            parse = simpleDateFormat.parse(str);
+        } catch (ParseException ex) {
+            return null;
+        }
+        return parse;
     }
 
     public static Date transFormat4Time(String str) {
@@ -88,16 +158,10 @@ public class DateCustomUtils {
         return srcDateFormat.format(date);
     }
 
-    public static void main(String[] args) throws ParseException {
-        String dateString = "2023/1/5"; // 月份和日不补零
-
-        // 步骤 1：解析为 LocalDate
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/M/d");
-        LocalDate localDate = LocalDate.parse(dateString, formatter);
-
-        // 步骤 2：转换为 Date（如需旧版 Date 对象）
-        Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-        System.out.println("Parsed Date: " + date);
+    public static int getDays4Month(int month) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.MONTH, month - 1);
+        calendar.set(Calendar.DATE, 1); // 设置年份和月份，日期设为1号
+        return calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
     }
 }

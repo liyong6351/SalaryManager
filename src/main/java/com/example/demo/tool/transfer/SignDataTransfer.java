@@ -1,31 +1,31 @@
 package com.example.demo.tool.transfer;
 
-import com.example.demo.model.PlanDataModel;
+import com.example.demo.mapper.TSystemUserPlanDBModelMapper;
 import com.example.demo.model.SignDataModel;
+import com.example.demo.model.db.TSystemUserPlanDBModel;
 import com.example.demo.utils.DateCustomUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
-import static com.example.demo.utils.RedisUtils.getPlanData4User;
-import static com.example.demo.utils.StringCustomUtils.splitStringByFixedLength;
+import static com.example.demo.utils.StringCustomUtils.splitString4HHmm;
 
+@Slf4j
 @Component(value = "sign")
 public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
 
-    private final StringRedisTemplate stringRedisTemplate;
+    private final TSystemUserPlanDBModelMapper tSystemUserPlanDBModelMapper;
 
-    public SignDataTransfer(StringRedisTemplate stringRedisTemplate) {
-        this.stringRedisTemplate = stringRedisTemplate;
+    public SignDataTransfer(TSystemUserPlanDBModelMapper tSystemUserPlanDBModelMapper) {
+        this.tSystemUserPlanDBModelMapper = tSystemUserPlanDBModelMapper;
     }
 
     @Override
     protected List<SignDataModel> doTransfer(List<Map<String, String>> dataList) {
-        System.out.println("data");
         List<SignDataModel> result = new ArrayList<>();
         Map<String, Date> index2DateKey = transPeriodData(dataList.get(2).get("2"));
 
@@ -48,21 +48,29 @@ public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
                     SignDataModel model = new SignDataModel();
                     model.setDate(index2DateKey.get(key));
                     model.setName(name);
-                    model.setDate(index2DateKey.get(key));
-                    model.setOriginalData(dataMap.get(key));
-                    generateStartEndTime(model, dataMap.get(key));
-                    result.add(model);
+                    model = generateStartEndTime(model, dataMap.get(key));
+                    if (model != null) {
+                        result.add(model);
+                    }
                 }
             }
         }
         return result;
     }
 
-    private void generateStartEndTime(SignDataModel model, String s) {
+    private SignDataModel generateStartEndTime(SignDataModel model, String s) {
         //06:0306:0314:0917:1017:1017:1117:11
 
+        TSystemUserPlanDBModel model1 = tSystemUserPlanDBModelMapper.selectByNameAndDate(model.getName(), model.getDate());
+        if (model1 == null) {
+            return null;
+        }
+        model.setType(model1.getType());
+        model.setShouldStartTime(model1.getStartTime());
+        model.setShouldEndTime(model1.getEndTime());
+
         if (StringUtils.isNotBlank(s)) {
-            List<String> strings = splitStringByFixedLength(s, 5);
+            List<String> strings = splitString4HHmm(s);
             List<Date> dateList = generateDateList(model.getDate(), strings);
             dateList.sort((o1, o2) -> {
                 if (o1.before(o2)) {
@@ -76,29 +84,11 @@ public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
             if (CollectionUtils.isNotEmpty(dateList) && dateList.size() > 1) {
                 model.setStartTime(dateList.get(0));
                 model.setEndTime(dateList.get(dateList.size() - 1));
+                model.setCardTimes(dateList.size());
             }
-            PlanDataModel planData4User = getPlanData4User(stringRedisTemplate, model.getName(), model.getDate());
-            judgeData(planData4User, model);
-            System.out.println("hello");
+            model.setOriginalData(s.replace("\n", ""));
         }
-    }
-
-    private void judgeData(PlanDataModel planData4User, SignDataModel model) {
-        if (planData4User != null) {
-            if (planData4User.getStartTime() != null && planData4User.getEndTime() != null) {
-                if (model.getStartTime() == null || model.getEndTime() == null) {
-                    model.setLackCard(true);
-                    model.setLackArrived(true);
-                }
-                if (model.getStartTime().after(planData4User.getStartTime())) {
-                    model.setArrivedLate(true);
-                    model.setLackArrived(true);
-                } else if (model.getEndTime().before(planData4User.getEndTime())) {
-                    model.setLeaveEarly(true);
-                    model.setLackArrived(true);
-                }
-            }
-        }
+        return model;
     }
 
     private List<Date> generateDateList(Date date, List<String> strings) {
@@ -115,15 +105,19 @@ public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
     private Map<String, Date> transPeriodData(String s) {
         Map<String, Date> result = new HashMap<>();
         //2 -> 2025-06-01 ~ 2025-06-30
-        String[] split = s.split("~");
+        String[] split = s.split("~", 0);
         Date startDay = DateCustomUtils.transFormat4Day(split[0].trim());
         Date endDay = DateCustomUtils.transFormat4Day(split[1].trim());
+        if (startDay == null || endDay == null) {
+            log.info("failed reason s is not valid");
+            return result;
+        }
         Calendar startCalender = Calendar.getInstance();
         startCalender.setTime(startDay);
         Calendar endCalender = Calendar.getInstance();
         endCalender.setTime(endDay);
 
-        int index = 1;
+        int index = 0;
         while (startCalender.before(endCalender)) {
             result.put(index + "", startCalender.getTime());
             startCalender.add(Calendar.DATE, 1);

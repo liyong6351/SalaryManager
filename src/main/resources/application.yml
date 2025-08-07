@@ -1,12 +1,38 @@
+# 关闭 MyBatis SQL 日志
+logging:
+  level:
+    org:
+      mybatis: error
+      apache:
+        ibatis: error
+      springframework:
+        jdbc: error
+    com:
+      com:
+        example:
+          demo:
+            mapper: error
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+
+  #  log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
 # THYMELEAF (ThymeleafAutoConfiguration)
 # 开启模板缓存（默认值： true ）
 spring:
-  redis:
-    database: 0
-    host: 127.0.0.1
-    port: 6678
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/salary?allowPublicKeyRetrieval=true&autoReconnect=true&useUnicode=true&characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      username: liyong
+      password: 123qwe!@#QWE
+      jdbc-url: jdbc:mysql://127.0.0.1:3306/salary?allowPublicKeyRetrieval=true&autoReconnect=true&useUnicode=true&characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull
+      max-lifetime: 12000000
     # 密码，没有则留空或注释掉此项
-    password: 234wer@#$WER
+    # password: 234wer@#$WER
     timeout: 10000ms # 连接超时时间（毫秒）
     lettuce:
       pool:
