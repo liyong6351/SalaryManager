@@ -158,10 +158,38 @@ public class DateCustomUtils {
         return srcDateFormat.format(date);
     }
 
+    public static String transFormat4DayShort(Date date) {
+        SimpleDateFormat srcDateFormat = new SimpleDateFormat(FORMAT_SHORT);
+        return srcDateFormat.format(date);
+    }
+
+    public static String transFormat4YYYYMMDDHHMISS(Date date) {
+        if (date == null) {
+            return null;
+        }
+        SimpleDateFormat srcDateFormat = new SimpleDateFormat(FORMAT_SECOND);
+        return srcDateFormat.format(date);
+    }
+
     public static int getDays4Month(int month) {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.MONTH, month - 1);
         calendar.set(Calendar.DATE, 1); // 设置年份和月份，日期设为1号
         return calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+    }
+
+    public static boolean isSameDate(Date date1, Date date2) {
+        if (date1 == null && date2 == null) {
+            return true;
+        } else if (date1 != null && date2 != null) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date1);
+            int d = calendar.get(Calendar.DATE);
+            calendar.setTime(date2);
+            int d1 = calendar.get(Calendar.DATE);
+            return d == d1;
+        } else {
+            return false;
+        }
     }
 }

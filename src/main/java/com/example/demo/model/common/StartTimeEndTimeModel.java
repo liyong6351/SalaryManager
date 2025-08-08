@@ -14,4 +14,5 @@ import java.util.Date;
 public class StartTimeEndTimeModel {
     Date startTime;
     Date endTime;
+    boolean isTwoDay;
 }

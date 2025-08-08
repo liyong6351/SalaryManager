@@ -49,9 +49,6 @@ public class AttendanceController {
                 .headRowNumber(0)
                 .doReadSync();
         String s = service.uploadPlan(lists);
-
-        //0 -> 排班信息：班次A（早班）: 07:30-17:00  班次B：14:00-22:00（中班）  休: 当天休息
-
         model.addAttribute("message", "排班表导入成功:" + s);
         return "upload";
     }

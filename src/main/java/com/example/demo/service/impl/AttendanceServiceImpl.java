@@ -29,8 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.example.demo.utils.DateCustomUtils.getDays4Month;
-import static com.example.demo.utils.DateCustomUtils.isDateSame;
+import static com.example.demo.utils.DateCustomUtils.*;
 import static com.example.demo.utils.StringCustomUtils.*;
 
 @Slf4j
@@ -107,8 +106,12 @@ public class AttendanceServiceImpl implements AttendanceService {
         String text = stringStringMap.get("0");
 
         String[] split = text.split(" ", 0);
+        // 清洗月份
         int month = getMonthDate(split[0]);
+        // 获取每个月的天数
+        int days = getDays4Month(month);
 
+        // 封装 排班 -> {开始时间，结束时间}
         Map<String, StartTimeEndTimeModel> map = new HashMap<>();
         for (int i = 1; i < split.length; ) {
             String key = etl4Key(split[i]);
@@ -118,12 +121,9 @@ public class AttendanceServiceImpl implements AttendanceService {
 
 
         List<TSystemPlanDBModel> list = new ArrayList<>();
-
-        int days = getDays4Month(month);
-
         for (int i = 1; i <= days; i++) {
             int finalI = i;
-            map.forEach((k, v) -> list.add(generatePlanData(finalI, month, k, v, text)));
+            map.forEach((plan, startTimeEndTimeModel) -> list.add(generatePlanData(finalI, month, plan, startTimeEndTimeModel, text)));
         }
         if (CollectionUtils.isNotEmpty(list)) {
             List<Integer> existIdList = new ArrayList<>();
@@ -142,32 +142,27 @@ public class AttendanceServiceImpl implements AttendanceService {
                 } catch (Exception e) {
                     log.error("error ", e);
                 }
-
             }
         }
     }
 
-    private static TSystemPlanDBModel generatePlanData(int i, int month, String type, StartTimeEndTimeModel model, String text) {
+    private static TSystemPlanDBModel generatePlanData(int day, int month, String type, StartTimeEndTimeModel model, String text) {
         TSystemPlanDBModel result = new TSystemPlanDBModel();
         result.setType(type);
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.DATE, i);
+        calendar.set(Calendar.DATE, day);
         calendar.set(Calendar.MONTH, month - 1);
-        result.setDate(DateCustomUtils.transFormat4Day(calendar.getTime()));
-
+        result.setDate(calendar.getTime());
         if (model.getStartTime() != null) {
             calendar.setTime(model.getStartTime());
-            calendar.set(Calendar.DATE, i);
+            calendar.set(Calendar.DATE, day);
             result.setStartTime(calendar.getTime());
         }
 
         if (model.getEndTime() != null) {
-            int date = calendar.get(Calendar.DATE);
             calendar.setTime(model.getEndTime());
-            if (date == calendar.get(Calendar.DATE)) {
-                calendar.set(Calendar.DATE, i);
-            } else {
-                calendar.set(Calendar.DATE, i);
+            calendar.set(Calendar.DATE, day);
+            if (model.isTwoDay()) {
                 calendar.add(Calendar.DATE, 1);
             }
             result.setEndTime(calendar.getTime());
@@ -217,7 +212,6 @@ public class AttendanceServiceImpl implements AttendanceService {
                     } catch (Exception e) {
                         log.error("error ", e);
                     }
-
                 }
             }
             List<DetailVo> detailVos = tUserCardRecordDBModelMapper.select4Detail();
@@ -229,8 +223,6 @@ public class AttendanceServiceImpl implements AttendanceService {
                     k.setAbsenseDetail(clearGroupConcat(k.getAbsenseDetail()));
                 });
             }
-            //List<SignOutPutDataModel> signOutPutDataModelList = invokeData(signDataModelList);
-            //List<SignOutPutStatisticsDataModel> statisticsDataModelList = invokeStatisticsData(signDataModelList);
             writeSheet(detailVos, statisticsDetailVos, response);
         }
     }

@@ -92,17 +92,19 @@ public class StringCustomUtils {
     public static StartTimeEndTimeModel dealTime(String str, int month) {
         Date startDate = null;
         Date endDate = null;
+        boolean isTwoDay = false;
         if (str.contains("-")) {
             String[] s1 = str.split("-", 0);
             startDate = DateCustomUtils.trans4Plan(month, s1[0]);
             endDate = DateCustomUtils.trans4Plan(month, s1[1]);
             if (!startDate.before(endDate)) {
+                isTwoDay = true;
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTime(endDate);
                 calendar.add(Calendar.DATE, 1);
                 endDate = calendar.getTime();
             }
         }
-        return new StartTimeEndTimeModel(startDate, endDate);
+        return new StartTimeEndTimeModel(startDate, endDate, isTwoDay);
     }
 }

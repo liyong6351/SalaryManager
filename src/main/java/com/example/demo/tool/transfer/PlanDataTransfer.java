@@ -1,33 +1,47 @@
 package com.example.demo.tool.transfer;
 
+import com.example.demo.mapper.TSystemPlanDBModelMapper;
+import com.example.demo.mapper.TSystemUserPlanDBModelMapper;
 import com.example.demo.model.PlanDataModel;
 import com.example.demo.model.common.StartTimeEndTimeModel;
+import com.example.demo.model.db.TSystemPlanDBModel;
+import com.example.demo.model.db.TSystemUserPlanDBModel;
 import com.example.demo.utils.DateCustomUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.example.demo.utils.DateCustomUtils.transFormat4Short;
+import static com.example.demo.utils.DateCustomUtils.*;
 import static com.example.demo.utils.StringCustomUtils.*;
 
 @Component(value = "plan")
 public class PlanDataTransfer extends AbstractExcelDataTransfer<PlanDataModel> {
 
+    private final TSystemPlanDBModelMapper tSystemPlanDBModelMapper;
+
+    public PlanDataTransfer(TSystemPlanDBModelMapper tSystemPlanDBModelMapper) {
+        this.tSystemPlanDBModelMapper = tSystemPlanDBModelMapper;
+    }
 
     @Override
     protected List<PlanDataModel> doTransfer(List<Map<String, String>> dataList) {
-        Map<String, Map<String, StartTimeEndTimeModel>> planAllData = transferRule4Month(dataList.get(2));
+
+        List<TSystemPlanDBModel> planList = tSystemPlanDBModelMapper.list();
+        // type||date -> model
+        Map<String, TSystemPlanDBModel> type2Date2PlanMap = planList.stream().collect(Collectors.toMap(k -> k.getType() + "||" + transFormat4DayShort(k.getDate()), v -> v, (v1, v2) -> v2));
 
         Map<String, String> keyMap = transferRule4KeyMap(dataList.get(3));
         List<PlanDataModel> list = new ArrayList<>();
         for (int i = 4; i < dataList.size(); i++) {
             Map<String, String> map = dataList.get(i);
-            list.addAll(transferSingData(planAllData, keyMap, map));
+            list.addAll(transferSingData(type2Date2PlanMap, keyMap, map));
         }
         return list;
     }
 
-    private List<PlanDataModel> transferSingData(Map<String, Map<String, StartTimeEndTimeModel>> allPlan, Map<String, String> keyMap, Map<String, String> map) {
+    private List<PlanDataModel> transferSingData(Map<String, TSystemPlanDBModel> typeDate2PlanMap, Map<String, String> keyMap, Map<String, String> map) {
         List<PlanDataModel> result = new ArrayList<>();
         map.remove("lineNumber");
         map.remove("0");
@@ -35,18 +49,16 @@ public class PlanDataTransfer extends AbstractExcelDataTransfer<PlanDataModel> {
         map.remove("2");
         String name = map.get("3");
         map.remove("3");
+
         map.forEach((k, v) -> {
             PlanDataModel model = new PlanDataModel();
             model.setName(name);
             model.setType(v);
             model.setDate(transFormat4Short(keyMap.get(k)));
-            String date = DateCustomUtils.transFormat4Day(model.getDate());
-            if (allPlan.get(date) != null && allPlan.get(date).get(model.getType()) != null) {
-                StartTimeEndTimeModel startTimeEndTimeModel = allPlan.get(date).get(model.getType());
-                model.setStartTime(startTimeEndTimeModel.getStartTime());
-                model.setEndTime(startTimeEndTimeModel.getEndTime());
-            } else {
-                model.setDescription("type is " + model.getType());
+            String key = model.getType() + "||" + keyMap.get(k);
+            if (typeDate2PlanMap.containsKey(key)) {
+                model.setStartTime(typeDate2PlanMap.get(key).getStartTime());
+                model.setEndTime(typeDate2PlanMap.get(key).getEndTime());
             }
             model.setDescription("排班是" + model.getType());
             result.add(model);
@@ -63,10 +75,10 @@ public class PlanDataTransfer extends AbstractExcelDataTransfer<PlanDataModel> {
 
     private Map<String, Map<String, StartTimeEndTimeModel>> transferRule4Month(Map<String, String> stringStringMap) {
         Map<String, StartTimeEndTimeModel> result = new HashMap<>();
-        // 7月排班信息 班次A（早班） 07:30-17:00 班次B： 14:00-22:00（中班） 休: 当天休息
+        // 7月排班信息 班次A（早班） 07:30-17:00 班次B（中班） 14:00-22:00 休 当天休息 班次C 08:00-20:00 班次D 20:00-08:00
         String text = stringStringMap.get("0");
-
         String[] split = text.split(" ", 0);
+
         int month = getMonthDate(split[0]);
 
         for (int i = 1; i < split.length; ) {
@@ -91,27 +103,19 @@ public class PlanDataTransfer extends AbstractExcelDataTransfer<PlanDataModel> {
                 Map<String, StartTimeEndTimeModel> temp = new HashMap<>();
                 data.forEach((k, v) -> {
                     StartTimeEndTimeModel t = new StartTimeEndTimeModel();
-                    int startDay = 0;
+                    Calendar calendar1 = Calendar.getInstance();
                     if (v.getStartTime() == null) {
                         t.setStartTime(null);
                     } else {
-                        Calendar calendar1 = Calendar.getInstance();
                         calendar1.setTime(v.getStartTime());
-                        startDay = calendar1.get(Calendar.DATE);
                         calendar1.set(Calendar.DATE, calendar.get(Calendar.DATE));
                         t.setStartTime(calendar1.getTime());
                     }
                     if (v.getEndTime() == null) {
                         t.setEndTime(null);
                     } else {
-                        Calendar calendar1 = Calendar.getInstance();
                         calendar1.setTime(v.getEndTime());
-                        if (startDay != calendar1.get(Calendar.DATE)) {
-                            calendar1.add(Calendar.DATE, 1);
-                        } else {
-                            calendar1.set(Calendar.DATE, calendar.get(Calendar.DATE));
-                        }
-                        t.setEndTime(calendar1.getTime());
+                        calendar1.set(Calendar.DATE, calendar.get(Calendar.DATE));
                     }
                     temp.put(k, t);
                 });
