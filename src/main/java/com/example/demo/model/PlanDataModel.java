@@ -16,6 +16,7 @@ public class PlanDataModel {
     private String name;
     private String type;
     private Date date;
+    private boolean isTwoDay;
     private Date startTime;
     private Date endTime;
     private String description;

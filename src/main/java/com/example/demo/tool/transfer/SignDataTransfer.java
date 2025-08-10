@@ -35,6 +35,7 @@ public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
             result.addAll(generateSignList(index2DateKey, nameMap, dataMap));
             i += 2;
         }
+
         return result;
     }
 
@@ -66,12 +67,13 @@ public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
             return null;
         }
         model.setType(model1.getType());
+        model.setTwoDay(model1.isTwoDay());
         model.setShouldStartTime(model1.getStartTime());
         model.setShouldEndTime(model1.getEndTime());
 
         if (StringUtils.isNotBlank(s)) {
             List<String> strings = splitString4HHmm(s);
-            List<Date> dateList = generateDateList(model.getDate(), strings);
+            List<Date> dateList = generateDateList(model.isTwoDay(), model.getDate(), strings);
             dateList.sort((o1, o2) -> {
                 if (o1.before(o2)) {
                     return -1;
@@ -91,7 +93,7 @@ public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
         return model;
     }
 
-    private List<Date> generateDateList(Date date, List<String> strings) {
+    private List<Date> generateDateList(boolean isTwoDay, Date date, List<String> strings) {
         List<Date> result = new ArrayList<>();
         String dateStr = DateCustomUtils.transFormat4Day(date);
         strings.forEach(k -> {
@@ -99,6 +101,18 @@ public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
             Date tempDate = DateCustomUtils.transFormat4Time(tempDateStr);
             result.add(tempDate);
         });
+        Date d1 = result.get(0);
+        if (isTwoDay) {
+            for (int i = 1; i < result.size(); i++) {
+                if (result.get(i).before(d1)) {
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(result.get(i));
+                    calendar.set(Calendar.MILLISECOND, 0);
+                    calendar.add(Calendar.DATE, 1);
+                    result.set(i, calendar.getTime());
+                }
+            }
+        }
         return result;
     }
 

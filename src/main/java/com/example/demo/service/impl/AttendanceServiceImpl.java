@@ -27,9 +27,8 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.example.demo.utils.DateCustomUtils.*;
+import static com.example.demo.utils.DateCustomUtils.getDays4Month;
 import static com.example.demo.utils.StringCustomUtils.*;
 
 @Slf4j
@@ -69,6 +68,7 @@ public class AttendanceServiceImpl implements AttendanceService {
                 model.setUserName(k.getName());
                 model.setDate(k.getDate());
                 model.setType(k.getType());
+                model.setTwoDay(k.isTwoDay());
                 model.setStartTime(k.getStartTime());
                 model.setEndTime(k.getEndTime());
                 dataList.add(model);
@@ -76,20 +76,12 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
         if (CollectionUtils.isNotEmpty(dataList)) {
             List<TSystemUserPlanDBModel> insertList = new ArrayList<>();
-            AtomicInteger updateCount = new AtomicInteger();
             dataList.forEach(k -> {
                 TSystemUserPlanDBModel model = tSystemUserPlanDBModelMapper.selectByCondition(k.getUserName(), k.getType(), k.getDate());
-                if (model == null) {
-                    insertList.add(k);
-                } else {
-                    if (!isDateSame(model.getStartTime(), k.getStartTime()) || !isDateSame(model.getEndTime(), k.getEndTime())) {
-
-                        model.setStartTime(k.getStartTime());
-                        model.setEndTime(k.getEndTime());
-                        updateCount.getAndIncrement();
-                        tSystemUserPlanDBModelMapper.updateByPrimaryKey(model);
-                    }
+                if (model != null) {
+                    tSystemUserPlanDBModelMapper.deleteByPrimaryKey(model.getId());
                 }
+                insertList.add(k);
             });
             if (CollectionUtils.isNotEmpty(insertList)) {
                 try {
@@ -150,17 +142,21 @@ public class AttendanceServiceImpl implements AttendanceService {
         TSystemPlanDBModel result = new TSystemPlanDBModel();
         result.setType(type);
         Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.DATE, day);
         calendar.set(Calendar.MONTH, month - 1);
         result.setDate(calendar.getTime());
+        result.setTwoDay(model.isTwoDay());
         if (model.getStartTime() != null) {
             calendar.setTime(model.getStartTime());
+            calendar.set(Calendar.MILLISECOND, 0);
             calendar.set(Calendar.DATE, day);
             result.setStartTime(calendar.getTime());
         }
 
         if (model.getEndTime() != null) {
             calendar.setTime(model.getEndTime());
+            calendar.set(Calendar.MILLISECOND, 0);
             calendar.set(Calendar.DATE, day);
             if (model.isTwoDay()) {
                 calendar.add(Calendar.DATE, 1);
@@ -169,6 +165,9 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         result.setOriginData(text);
+        if (result.getStartTime() != null && result.getEndTime() != null) {
+            System.out.println(result.getStartTime().getTime() + "||" + result.getEndTime().getTime());
+        }
         return result;
     }
 
@@ -180,10 +179,14 @@ public class AttendanceServiceImpl implements AttendanceService {
         if (CollectionUtils.isNotEmpty(signDataModelList)) {
             List<TUserCardRecordDBModel> dataList = new ArrayList<>();
             signDataModelList.forEach(k -> {
+                if (k.getStartTime() != null && k.getEndTime() != null){
+                    System.out.println(k.getStartTime().getTime() + "||" + k.getEndTime().getTime());
+                }
                 TSystemUserPlanDBModel model = tSystemUserPlanDBModelMapper.selectByNameAndDate(k.getName(), k.getDate());
                 TUserCardRecordDBModel date = new TUserCardRecordDBModel();
                 date.setUserName(model.getUserName());
                 date.setDate(k.getDate());
+                date.setTwoDay(k.isTwoDay());
                 date.setType(model.getType());
                 date.setStartTime(k.getStartTime());
                 date.setEndTime(k.getEndTime());
@@ -199,12 +202,10 @@ public class AttendanceServiceImpl implements AttendanceService {
                 List<TUserCardRecordDBModel> insertList = new ArrayList<>();
                 dataList.forEach(k -> {
                     TUserCardRecordDBModel oldModel = tUserCardRecordDBModelMapper.selectByCondition(k.getUserName(), k.getDate());
-                    if (oldModel == null) {
-                        insertList.add(k);
-                    } else {
-                        k.setId(oldModel.getId());
-                        tUserCardRecordDBModelMapper.updateByPrimaryKey(k);
+                    if (oldModel != null) {
+                        tUserCardRecordDBModelMapper.deleteByPrimaryKey(oldModel.getId());
                     }
+                    insertList.add(k);
                 });
                 if (CollectionUtils.isNotEmpty(insertList)) {
                     try {
@@ -215,12 +216,22 @@ public class AttendanceServiceImpl implements AttendanceService {
                 }
             }
             List<DetailVo> detailVos = tUserCardRecordDBModelMapper.select4Detail();
-            List<StatisticsDetailVo> statisticsDetailVos = tUserCardRecordDBModelMapper.select4Statistics();
-            if (CollectionUtils.isNotEmpty(statisticsDetailVos)) {
-                statisticsDetailVos.forEach(k -> {
-                    k.setLateDetail(clearGroupConcat(k.getLateDetail()));
-                    k.setEarlyDetail(clearGroupConcat(k.getEarlyDetail()));
-                    k.setAbsenseDetail(clearGroupConcat(k.getAbsenseDetail()));
+            List<StatisticsDetailVo> statisticsDetailVos = new ArrayList<>();
+
+            List<String> validTypeList = tSystemPlanDBModelMapper.selectValidType();
+            if (CollectionUtils.isNotEmpty(validTypeList)) {
+                statisticsDetailVos = tUserCardRecordDBModelMapper.select4Statistics(validTypeList);
+                if (CollectionUtils.isNotEmpty(statisticsDetailVos)) {
+                    statisticsDetailVos.forEach(k -> {
+                        k.setLateDetail(clearGroupConcat(k.getLateDetail()));
+                        k.setEarlyDetail(clearGroupConcat(k.getEarlyDetail()));
+                        k.setAbsenseDetail(clearGroupConcat(k.getAbsenseDetail()));
+                    });
+                }
+                detailVos.forEach(k -> {
+                    if (!validTypeList.contains(k.getType())) {
+                        k.setAbsense("");
+                    }
                 });
             }
             writeSheet(detailVos, statisticsDetailVos, response);

@@ -35,7 +35,8 @@ public class AttendanceController {
     }
 
     @PostMapping("/uploadPlan")
-    public String uploadExcel(@RequestParam("file") MultipartFile file, Model model) throws IOException {
+    public String uploadPlan(@RequestParam("file") MultipartFile file, Model model) throws IOException {
+        System.out.println("-------- uploadPlan -----");
         if (file.isEmpty()) {
             model.addAttribute("message", "请选择要上传的文件");
             model.addAttribute("messageType", "error");
@@ -56,6 +57,7 @@ public class AttendanceController {
     @PostMapping("/uploadData")
     public String uploadDataExcel(@RequestParam("file") MultipartFile file, Model model, HttpServletResponse response) throws IOException {
 
+        System.out.println("===== uploadDataExcel ====");
         List<Map<String, String>> lists = EasyExcel.read(file.getInputStream())
                 .ignoreEmptyRow(false)
                 .sheet(0)

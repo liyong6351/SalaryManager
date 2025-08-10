@@ -1,20 +1,19 @@
 package com.example.demo.tool.transfer;
 
 import com.example.demo.mapper.TSystemPlanDBModelMapper;
-import com.example.demo.mapper.TSystemUserPlanDBModelMapper;
 import com.example.demo.model.PlanDataModel;
-import com.example.demo.model.common.StartTimeEndTimeModel;
 import com.example.demo.model.db.TSystemPlanDBModel;
-import com.example.demo.model.db.TSystemUserPlanDBModel;
-import com.example.demo.utils.DateCustomUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.example.demo.utils.DateCustomUtils.*;
-import static com.example.demo.utils.StringCustomUtils.*;
+import static com.example.demo.utils.DateCustomUtils.transFormat4DayShort;
+import static com.example.demo.utils.DateCustomUtils.transFormat4Short;
+import static com.example.demo.utils.StringCustomUtils.etl4Key;
 
 @Component(value = "plan")
 public class PlanDataTransfer extends AbstractExcelDataTransfer<PlanDataModel> {
@@ -57,6 +56,7 @@ public class PlanDataTransfer extends AbstractExcelDataTransfer<PlanDataModel> {
             model.setDate(transFormat4Short(keyMap.get(k)));
             String key = model.getType() + "||" + keyMap.get(k);
             if (typeDate2PlanMap.containsKey(key)) {
+                model.setTwoDay(typeDate2PlanMap.get(key).isTwoDay());
                 model.setStartTime(typeDate2PlanMap.get(key).getStartTime());
                 model.setEndTime(typeDate2PlanMap.get(key).getEndTime());
             }
@@ -71,58 +71,5 @@ public class PlanDataTransfer extends AbstractExcelDataTransfer<PlanDataModel> {
         Map<String, String> result = new HashMap<>();
         map.forEach((k, v) -> result.put(k, etl4Key(v).replace("\n", "")));
         return result;
-    }
-
-    private Map<String, Map<String, StartTimeEndTimeModel>> transferRule4Month(Map<String, String> stringStringMap) {
-        Map<String, StartTimeEndTimeModel> result = new HashMap<>();
-        // 7月排班信息 班次A（早班） 07:30-17:00 班次B（中班） 14:00-22:00 休 当天休息 班次C 08:00-20:00 班次D 20:00-08:00
-        String text = stringStringMap.get("0");
-        String[] split = text.split(" ", 0);
-
-        int month = getMonthDate(split[0]);
-
-        for (int i = 1; i < split.length; ) {
-            result.put(etl4Key(split[i]), dealTime(split[i + 1], month));
-            i = i + 2;
-        }
-
-        return restorePlan4Days(month, result);
-    }
-
-    private Map<String, Map<String, StartTimeEndTimeModel>> restorePlan4Days(int month, Map<String, StartTimeEndTimeModel> data) {
-
-        Map<String, Map<String, StartTimeEndTimeModel>> tempData = new HashMap<>();
-        for (String key : data.keySet()) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(Calendar.MONTH, month - 1);
-            calendar.set(Calendar.DATE, 1);
-            calendar.add(Calendar.MONTH, 1);
-            calendar.add(Calendar.DATE, -1);
-            int realMonth = calendar.get(Calendar.MONTH);
-            do {
-                Map<String, StartTimeEndTimeModel> temp = new HashMap<>();
-                data.forEach((k, v) -> {
-                    StartTimeEndTimeModel t = new StartTimeEndTimeModel();
-                    Calendar calendar1 = Calendar.getInstance();
-                    if (v.getStartTime() == null) {
-                        t.setStartTime(null);
-                    } else {
-                        calendar1.setTime(v.getStartTime());
-                        calendar1.set(Calendar.DATE, calendar.get(Calendar.DATE));
-                        t.setStartTime(calendar1.getTime());
-                    }
-                    if (v.getEndTime() == null) {
-                        t.setEndTime(null);
-                    } else {
-                        calendar1.setTime(v.getEndTime());
-                        calendar1.set(Calendar.DATE, calendar.get(Calendar.DATE));
-                    }
-                    temp.put(k, t);
-                });
-                tempData.put(DateCustomUtils.transFormat4Day(calendar.getTime()), temp);
-                calendar.add(Calendar.DATE, -1);
-            } while (realMonth == calendar.get(Calendar.MONTH));
-        }
-        return tempData;
     }
 }

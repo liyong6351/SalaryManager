@@ -25,28 +25,17 @@ public class DateCustomUtils {
      * @param arg 输入参数 hh:mm 格式
      * @return yyyy-mm-dd hh:mm:ss 格式
      */
-    public static Date trans4Plan(int month, String arg) {
+    public static Date trans4Plan(int month, String arg, int addDate) {
         String[] split = arg.split("-", 0);
         String[] split1 = split[0].split(":", 0);
         Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.MILLISECOND, 0);
         calendar.set(Calendar.MONTH, month - 1);
         calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(split1[0]));
         calendar.set(Calendar.MINUTE, Integer.parseInt(split1[1]));
+        calendar.add(Calendar.DATE, addDate);
         calendar.set(Calendar.SECOND, 0);
         return calendar.getTime();
-    }
-
-    public static boolean isDateSame(Date date1, Date date2) {
-        boolean result = false;
-        if (date1 == null && date2 == null) {
-            result = true;
-        } else if (date1 != null && date2 != null) {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(FORMAT_SECOND);
-            String format = simpleDateFormat.format(date1);
-            String format1 = simpleDateFormat.format(date2);
-            result = format.equals(format1);
-        }
-        return result;
     }
 
     public static String getMonth(Date date) {
@@ -59,7 +48,6 @@ public class DateCustomUtils {
      *
      * @param str 2025/6/7
      * @return Date
-     * @throws ParseException 转换失败
      */
     public static Date transFormat4Short(String str) {
         // 步骤 1：解析为 LocalDate
@@ -74,7 +62,6 @@ public class DateCustomUtils {
      *
      * @param str 2025/6/7
      * @return Date
-     * @throws ParseException 转换失败
      */
     public static Date transFormat4Day(String str) {
         str = str.replaceAll("\t", "").replaceAll("\\(", "").replaceAll("\\)", "").trim();
@@ -115,7 +102,7 @@ public class DateCustomUtils {
 
     private static Date transFormat4DayMMDD(String str) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
-        Date parse = new Date();
+        Date parse;
         Calendar calendar = Calendar.getInstance();
         int year = calendar.get(Calendar.YEAR);
         str = year + "/" + str;
@@ -144,9 +131,10 @@ public class DateCustomUtils {
     public static Date transFormat4Time(String str) {
         // 步骤 1：解析为 LocalDate
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date parse = null;
+        Date parse;
         try {
             parse = simpleDateFormat.parse(str);
+            System.out.println("parse.getTime()=" + parse.getTime());
         } catch (ParseException e) {
             return new Date();
         }
@@ -176,20 +164,5 @@ public class DateCustomUtils {
         calendar.set(Calendar.MONTH, month - 1);
         calendar.set(Calendar.DATE, 1); // 设置年份和月份，日期设为1号
         return calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
-    }
-
-    public static boolean isSameDate(Date date1, Date date2) {
-        if (date1 == null && date2 == null) {
-            return true;
-        } else if (date1 != null && date2 != null) {
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(date1);
-            int d = calendar.get(Calendar.DATE);
-            calendar.setTime(date2);
-            int d1 = calendar.get(Calendar.DATE);
-            return d == d1;
-        } else {
-            return false;
-        }
     }
 }

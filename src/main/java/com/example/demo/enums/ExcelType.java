@@ -1,5 +1,8 @@
 package com.example.demo.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum ExcelType {
     PLAN("plan"),
     SIGN("sign");
@@ -10,7 +13,4 @@ public enum ExcelType {
         this.name = name;
     }
 
-    public String getName() {
-        return this.name;
-    }
 }

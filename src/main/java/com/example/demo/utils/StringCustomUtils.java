@@ -95,15 +95,15 @@ public class StringCustomUtils {
         boolean isTwoDay = false;
         if (str.contains("-")) {
             String[] s1 = str.split("-", 0);
-            startDate = DateCustomUtils.trans4Plan(month, s1[0]);
-            endDate = DateCustomUtils.trans4Plan(month, s1[1]);
-            if (!startDate.before(endDate)) {
+            startDate = DateCustomUtils.trans4Plan(month, s1[0], 0);
+            if (s1[1].contains("T")) {
                 isTwoDay = true;
-                Calendar calendar = Calendar.getInstance();
-                calendar.setTime(endDate);
-                calendar.add(Calendar.DATE, 1);
-                endDate = calendar.getTime();
+                String st = s1[1].replace("T", "");
+                endDate = DateCustomUtils.trans4Plan(month, st, 1);
+            } else {
+                endDate = DateCustomUtils.trans4Plan(month, s1[1], 0);
             }
+
         }
         return new StartTimeEndTimeModel(startDate, endDate, isTwoDay);
     }

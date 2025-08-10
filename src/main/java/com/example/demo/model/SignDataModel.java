@@ -16,6 +16,7 @@ public class SignDataModel {
     private String name;
     private Date date;
     private String type;
+    private boolean isTwoDay;
     private Date startTime;
     private Date endTime;
     private Date shouldStartTime;
