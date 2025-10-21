@@ -74,37 +74,50 @@ public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
         if (StringUtils.isNotBlank(s)) {
             List<String> strings = splitString4HHmm(s);
             List<Date> dateList = generateDateList(model.isTwoDay(), model.getDate(), strings);
-            dateList.sort((o1, o2) -> {
-                if (o1.before(o2)) {
-                    return -1;
-                } else if (o1.after(o2)) {
-                    return 1;
+            dateList.sort(Comparator.comparing(Date::getTime));
+            if (CollectionUtils.isNotEmpty(dateList)) {
+                if (dateList.size() > 1) {
+                    model.setStartTime(dateList.get(0));
+                    model.setEndTime(dateList.get(dateList.size() - 1));
                 } else {
-                    return 0;
+                    if (model.getShouldStartTime() != null && model.getShouldEndTime() != null) {
+                        long abStart = Math.abs((dateList.get(0).getTime() - model.getShouldStartTime().getTime()));
+                        long abEnd = Math.abs((dateList.get(0).getTime() - model.getShouldEndTime().getTime()));
+                        if (abStart < abEnd) {
+                            model.setStartTime(dateList.get(0));
+                        } else {
+                            model.setEndTime(dateList.get(0));
+                        }
+                    } else if (model.getShouldStartTime() != null) {
+                        model.setStartTime(dateList.get(0));
+                    } else if (model.getShouldEndTime() != null) {
+                        model.setEndTime(dateList.get(0));
+                    }
                 }
-            });
-            if (CollectionUtils.isNotEmpty(dateList) && dateList.size() > 1) {
-                model.setStartTime(dateList.get(0));
-                model.setEndTime(dateList.get(dateList.size() - 1));
                 model.setCardTimes(dateList.size());
+            } else {
+                model.setCardTimes(0);
             }
-            model.setOriginalData(s.replace("\n", ""));
+            model.setOriginalData(s);
         }
         return model;
     }
 
     private List<Date> generateDateList(boolean isTwoDay, Date date, List<String> strings) {
         List<Date> result = new ArrayList<>();
+        if (CollectionUtils.isEmpty(strings)) {
+            return result;
+        }
         String dateStr = DateCustomUtils.transFormat4Day(date);
         strings.forEach(k -> {
             String tempDateStr = dateStr + " " + k + ":00";
             Date tempDate = DateCustomUtils.transFormat4Time(tempDateStr);
             result.add(tempDate);
         });
-        Date d1 = result.get(0);
         if (isTwoDay) {
+            result.sort(Comparator.comparing(Date::getTime).reversed());
             for (int i = 1; i < result.size(); i++) {
-                if (result.get(i).before(d1)) {
+                if (result.get(i).before(result.get(0))) {
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTime(result.get(i));
                     calendar.set(Calendar.MILLISECOND, 0);
@@ -112,6 +125,8 @@ public class SignDataTransfer extends AbstractExcelDataTransfer<SignDataModel> {
                     result.set(i, calendar.getTime());
                 }
             }
+        } else {
+            result.sort(Comparator.comparing(Date::getTime));
         }
         return result;
     }

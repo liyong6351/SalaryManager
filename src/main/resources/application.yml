@@ -16,7 +16,7 @@ logging:
 mybatis:
   mapper-locations: classpath:mapper/*.xml
   configuration:
-    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
   #  log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 

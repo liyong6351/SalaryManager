@@ -134,7 +134,6 @@ public class DateCustomUtils {
         Date parse;
         try {
             parse = simpleDateFormat.parse(str);
-            System.out.println("parse.getTime()=" + parse.getTime());
         } catch (ParseException e) {
             return new Date();
         }

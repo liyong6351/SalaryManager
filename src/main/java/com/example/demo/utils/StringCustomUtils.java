@@ -69,7 +69,7 @@ public class StringCustomUtils {
         String[] split = str.split(";", 0);
         for (String s : split) {
             if (StringUtils.isNotBlank(s)) {
-                result.append(s).append("|");
+                result.append(s).append(" ");
             }
         }
         return result.toString();

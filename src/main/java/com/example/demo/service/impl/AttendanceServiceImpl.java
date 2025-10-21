@@ -165,9 +165,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         }
 
         result.setOriginData(text);
-        if (result.getStartTime() != null && result.getEndTime() != null) {
-            System.out.println(result.getStartTime().getTime() + "||" + result.getEndTime().getTime());
-        }
         return result;
     }
 
@@ -179,9 +176,6 @@ public class AttendanceServiceImpl implements AttendanceService {
         if (CollectionUtils.isNotEmpty(signDataModelList)) {
             List<TUserCardRecordDBModel> dataList = new ArrayList<>();
             signDataModelList.forEach(k -> {
-                if (k.getStartTime() != null && k.getEndTime() != null){
-                    System.out.println(k.getStartTime().getTime() + "||" + k.getEndTime().getTime());
-                }
                 TSystemUserPlanDBModel model = tSystemUserPlanDBModelMapper.selectByNameAndDate(k.getName(), k.getDate());
                 TUserCardRecordDBModel date = new TUserCardRecordDBModel();
                 date.setUserName(model.getUserName());
