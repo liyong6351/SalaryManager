@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.TUserCardRecordDBModelMapper">
+    <resultMap id="BaseResultMap" type="com.example.demo.model.db.TUserCardRecordDBModel">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="user_name" jdbcType="VARCHAR" property="userName"/>
+        <result column="date" jdbcType="TIMESTAMP" property="date"/>
+        <result column="type" jdbcType="VARCHAR" property="type"/>
+        <result column="is_two_day" jdbcType="BOOLEAN" property="isTwoDay"/>
+        <result column="start_time" jdbcType="TIMESTAMP" property="startTime"/>
+        <result column="end_time" jdbcType="TIMESTAMP" property="endTime"/>
+        <result column="should_start_time" jdbcType="TIMESTAMP" property="shouldStartTime"/>
+        <result column="should_end_time" jdbcType="TIMESTAMP" property="shouldEndTime"/>
+        <result column="late" jdbcType="VARCHAR" property="late"/>
+        <result column="early" jdbcType="VARCHAR" property="early"/>
+        <result column="absense" jdbcType="VARCHAR" property="absense"/>
+        <result column="lack_card" jdbcType="VARCHAR" property="lackCard"/>
+        <result column="card_times" jdbcType="INTEGER" property="cardTimes"/>
+        <result column="origin_data" jdbcType="VARCHAR" property="originData"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , user_name, date, type, is_two_day, start_time, end_time, should_start_time, should_end_time, late, early, absense, lack_card, card_times,
+    origin_data
+    </sql>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_user_card_record
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="selectByCondition" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_user_card_record
+        where user_name = #{name} and date = #{date}
+    </select>
+    <update id="truncateTable">
+        truncate table t_user_card_record
+    </update>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete
+        from t_user_card_record
+        where id = #{id,jdbcType=INTEGER}
+    </delete>
+    <insert id="insert" parameterType="com.example.demo.model.db.TUserCardRecordDBModel">
+        insert into t_user_card_record (id, user_name, date, is_two_day, type,
+                                        start_time, end_time, should_start_time, should_end_time, late,
+                                        early, absense, lack_card,
+                                        card_times, origin_data)
+        values (#{id,jdbcType=INTEGER}, #{userName,jdbcType=VARCHAR}, #{date,jdbcType=TIMESTAMP}, #{isTwoDay,jdbcType=BOOLEAN},
+                #{type,jdbcType=VARCHAR}, #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP},
+                #{shouldStartTime,jdbcType=TIMESTAMP}, #{shouldEndTime,jdbcType=TIMESTAMP}, #{late,jdbcType=VARCHAR},
+                #{early,jdbcType=VARCHAR}, #{absense,jdbcType=VARCHAR}, #{lackCard,jdbcType=VARCHAR},
+                #{cardTimes,jdbcType=INTEGER}, #{originData,jdbcType=VARCHAR})
+    </insert>
+
+    <select id="select4Detail" resultType="com.example.demo.model.excel.DetailVo">
+        SELECT
+            DATE_FORMAT(`date`,'%m月%d日') as `date`,
+            type,user_name as name,
+            DATE_FORMAT(start_time,'%d %H:%i') as startTime,
+            DATE_FORMAT(end_time,'%d %H:%i') as endTime,
+            DATE_FORMAT(should_start_time,'%d %H:%i') as shouldStartTime,
+            DATE_FORMAT(should_end_time,'%d %H:%i') as shouldEndTime,
+            case late	when  'N' then '' when 'Y' then '是' end as late,
+            case early	when  'N' then '' when 'Y' then '是' end as early,
+            case lack_card	when  'N' then '' when 'Y' then '是' end as lack_card,
+            case absense	when  'N' then '' when 'Y' then '是' end as absense,
+            case is_two_day	when  1 then '是' else '' end as isTwoDay,
+            origin_data as originData
+        FROM t_user_card_record t ORDER BY user_name,date
+    </select>
+
+    <select id="select4Statistics" resultType="com.example.demo.model.excel.StatisticsDetailVo">
+        SELECT DATE_FORMAT(`date`, '%Y-%m')                                              as `month`,
+               user_name                                                                 as name,
+               SUM(CASE WHEN type is not null THEN 1 ELSE 0 END)                 AS shouldWorkDays,
+               SUM(CASE WHEN absense = 'N' THEN 1 ELSE 0 END)                            AS workDays,
+               SUM(CASE WHEN late = 'Y' THEN 1 ELSE 0 END)                               AS lateDays,
+               SUM(CASE WHEN early = 'Y' THEN 1 ELSE 0 END)                              AS earlyDays,
+               SUM(CASE WHEN absense = 'Y' THEN 1 ELSE 0 END)                            AS absenseDays,
+               GROUP_CONCAT(CASE WHEN late = 'Y' THEN date ELSE '' END SEPARATOR ';')    as lateDetail,
+               GROUP_CONCAT(CASE WHEN early = 'Y' THEN date ELSE '' END SEPARATOR ';')   as earlyDetail,
+               GROUP_CONCAT(CASE WHEN absense = 'Y' THEN date ELSE '' END SEPARATOR ';') as absenseDetail
+        FROM t_user_card_record
+        WHERE start_time is not null and type in
+        <foreach collection="list" separator="," item="item" open="(" close=")">
+            #{item}
+        </foreach>
+        GROUP BY DATE_FORMAT(`date`, '%Y-%m'), user_name
+    </select>
+
+</mapper>

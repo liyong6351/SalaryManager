@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.mapper.TSystemPlanDBModelMapper">
+    <resultMap id="BaseResultMap" type="com.example.demo.model.db.TSystemPlanDBModel">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="type" jdbcType="VARCHAR" property="type"/>
+        <result column="date" jdbcType="DATE" property="date"/>
+        <result column="is_two_day" jdbcType="BOOLEAN" property="isTwoDay"/>
+        <result column="start_time" jdbcType="TIMESTAMP" property="startTime"/>
+        <result column="end_time" jdbcType="TIMESTAMP" property="endTime"/>
+        <result column="originData" jdbcType="VARCHAR" property="origin_data"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id
+        , type, date, is_two_day, start_time, end_time,origin_data
+    </sql>
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_system_plan
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+    <select id="list" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from t_system_plan
+    </select>
+    <update id="truncateTable">
+        truncate table t_system_plan
+    </update>
+    <select id="selectByTypeAndDate" resultType="java.lang.Integer">
+        select id
+        from t_system_plan
+        where type = #{type}
+          and `date` = #{date}
+    </select>
+    <select id="selectValidType" resultType="java.lang.String">
+        SELECT DISTINCT type
+        from t_system_plan
+        WHERE start_time is NOT null
+          AND end_time is not NULL
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete
+        from t_system_plan
+        where id = #{id,jdbcType=INTEGER}
+    </delete>
+    <delete id="deleteByIdList" parameterType="java.lang.Integer">
+        delete from t_system_plan
+        where id in
+        <foreach collection="list" separator="," open="(" close=")" item="item">
+            #{item}
+        </foreach>
+    </delete>
+    <insert id="insert" parameterType="com.example.demo.model.db.TSystemPlanDBModel">
+        insert into t_system_plan (id, type, date, is_two_day,
+                                   start_time, end_time, origin_data)
+        values (#{id,jdbcType=INTEGER}, #{type,jdbcType=VARCHAR}, #{date,jdbcType=DATE}, #{isTwoDay,jdbcType=BOOLEAN},
+                #{startTime,jdbcType=TIMESTAMP}, #{endTime,jdbcType=TIMESTAMP}, #{originData,jdbcType=VARCHAR})
+    </insert>
+
+    <insert id="insertBatch" parameterType="com.example.demo.model.db.TSystemPlanDBModel">
+        insert into t_system_plan (id, type, date,start_time, end_time, origin_data)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id,jdbcType=INTEGER}, #{item.type,jdbcType=VARCHAR}, #{item.date,jdbcType=DATE},
+            #{item.startTime,jdbcType=TIMESTAMP}, #{item.endTime,jdbcType=TIMESTAMP}, #{item.originData,jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+</mapper>
